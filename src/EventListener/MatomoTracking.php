@@ -40,6 +40,14 @@ class MatomoTracking {
 			return;
 		}
 
+        if(is_int($page) === true){
+            $page = PageModel::findById($page);
+        }
+
+        if(!$page instanceof PageModel){
+            return;
+        }
+
 		if ($rootPage = PageModel::findByPk($page->rootId)) {
 
 			$GLOBALS['COMATRACK_INIT'] = false;
@@ -269,7 +277,7 @@ class MatomoTracking {
 		if (isset($_SERVER['REQUEST_TIME_FLOAT'])) {
 			$matomoTracker->setGenerationTime((int)$gentime);
 		}
-		
+
 		// DoNotTrack in einem CustomDimension schreiben sofern konfiguriert
 		if (isset($GLOBALS['COMATRACK_SETTINGS']['dnt_dim']) && (int)$GLOBALS['COMATRACK_SETTINGS']['dnt_dim'] > 0) {
 			if (isset($_SERVER['HTTP_DNT']) && $_SERVER['HTTP_DNT'] == '1') {
