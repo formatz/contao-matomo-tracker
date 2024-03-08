@@ -2,6 +2,7 @@
 
 namespace Chopsol\ContaoMatomoTracker\EventListener;
 
+use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Framework\ContaoFrameworkInterface;
 use Contao\Database;
 use Contao\PageModel;
@@ -21,9 +22,9 @@ class MatomoTracking {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContaoFrameworkInterface $framework
+	 * @param ContaoFramework|ContaoFrameworkInterface $framework
 	 */
-	public function __construct(ContaoFrameworkInterface $framework) {
+	public function __construct(ContaoFramework|ContaoFrameworkInterface $framework) {
 
 		$this->framework = $framework;
 		$this->session = false;

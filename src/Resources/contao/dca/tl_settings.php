@@ -20,7 +20,7 @@ $GLOBALS['TL_DCA']['tl_settings']['fields']['comatrack_exclude_ua'] = array	(
 		    'save_callback'           => array(array('tl_settings_comatrack','comatrackSettingsSaveCallback'))
 		);
 
-class tl_settings_comatrack extends Backend {
+class tl_settings_comatrack extends \Contao\Backend {
 
     public function comatrackSettingsSaveCallback($varValue, DataContainer $dc)
     {
