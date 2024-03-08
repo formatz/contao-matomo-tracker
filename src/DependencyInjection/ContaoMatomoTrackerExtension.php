@@ -9,10 +9,7 @@ use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 
 class ContaoMatomoTrackerExtension extends Extension
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function load(array $mergedConfig, ContainerBuilder $container)
+    public function load(array $configs, ContainerBuilder $container)
     {
         $loader = new YamlFileLoader(
             $container,

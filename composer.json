@@ -45,5 +45,12 @@
 	"support": {
 		"issues": "https://github.com/chopsol/contao-matomo-tracker/issues",
 		"source": "https://github.com/chopsol/contao-matomo-tracker"
+	},
+	"config": {
+		"allow-plugins": {
+			"php-http/discovery": true,
+			"contao-components/installer": true,
+			"contao/manager-plugin": true
+		}
 	}
 }
