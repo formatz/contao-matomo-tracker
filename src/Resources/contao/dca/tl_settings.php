@@ -22,8 +22,9 @@ $GLOBALS['TL_DCA']['tl_settings']['fields']['comatrack_exclude_ua'] = array	(
 
 class tl_settings_comatrack extends \Contao\Backend {
 
-    public function comatrackSettingsSaveCallback($varValue, DataContainer $dc)
+    public function comatrackSettingsSaveCallback($varValue, $dc)
     {
+		/** @var $dc DataContainer|DC_File */
 
     	$retValues = array();
 
@@ -37,9 +38,10 @@ class tl_settings_comatrack extends \Contao\Backend {
     	}
         return implode("~~~",$retValues);
     }
-    public function comatrackSettingsLoadCallback($varValue, DataContainer $dc)
+    public function comatrackSettingsLoadCallback($varValue, $dc)
     {
+		/** @var $dc DataContainer|DC_File */
+
 		return str_replace("~~~","\n",$varValue);
-//        return strtr($varValue,'~~~',"\n");
     }
 }
