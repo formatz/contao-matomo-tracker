@@ -3,11 +3,14 @@
 namespace Chopsol\ContaoMatomoTracker\EventListener;
 
 use BugBuster\BotDetection\ModuleBotDetection;
+use Contao\Config;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Framework\ContaoFrameworkInterface;
+use Contao\Environment;
 use Contao\PageModel;
 use Contao\System;
 use Jaybizzle\CrawlerDetect\CrawlerDetect;
+use Symfony\Component\HttpFoundation\Exception\SessionNotFoundException;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\Event\TerminateEvent;
@@ -23,7 +26,7 @@ class MatomoTracking
 
     public function onKernelRequest(RequestEvent $requestEvent)
     {
-        $logger = System::getContainer()->get('monolog.logger.contao');
+        $logger = System::getContainer()?->get('monolog.logger.contao');
         $request = $requestEvent->getRequest();
 
         // Ist das Framework oder das pageModel nicht vorhanden (z.B. im Backend)
@@ -78,16 +81,23 @@ class MatomoTracking
 
                 // Sessiondaten laden sofern eine Session zuvor initialisiert wurde
                 if ($request->hasPreviousSession()) {
-                    $session = $request->getSession();
-                    $this->sessionData = $session->all();
-                    // Ist der Nutzer im Backend angemeldet, tracken wir im Frontend nichts.
-                    if (isset($this->sessionData['_security_contao_backend'])) {
-                        if (isset($rootPage->comatrack_debug) && '1' == $rootPage->comatrack_debug) {
-                            $logger->log('info','Background-Tracking: User im Backend angemeldet', __METHOD__, TL_GENERAL);
-                        }
-                        $GLOBALS['COMATRACK_INIT'] = false;
+                    try {
+                        $session = $request->getSession();
+                        $this->sessionData = $session->all();
+                        // Ist der Nutzer im Backend angemeldet, tracken wir im Frontend nichts.
+                        if (isset($this->sessionData['_security_contao_backend'])) {
+                            if (isset($rootPage->comatrack_debug) && '1' == $rootPage->comatrack_debug) {
+                                $logger->log('info', 'Background-Tracking: User im Backend angemeldet', __METHOD__, TL_GENERAL);
+                            }
+                            $GLOBALS['COMATRACK_INIT'] = false;
 
-                        return;
+                            return;
+                        }
+                    }
+                    catch (SessionNotFoundException $e) {
+                        if (isset($rootPage->comatrack_debug) && '1' == $rootPage->comatrack_debug) {
+                            $logger->log('info','Background-Tracking: Session has not been set', __METHOD__, TL_GENERAL);
+                        }
                     }
                 }
 
@@ -96,7 +106,7 @@ class MatomoTracking
                 // zu müssen setzen wir einen Wert im Session-Cookie
                 if (!isset($this->sessionData['comatrackIsBot'])) {
                     // IP-Ausschlussliste prüfen
-                    $exludeIPs = \Config::get('comatrack_exclude_ip');
+                    $exludeIPs = Config::get('comatrack_exclude_ip');
                     if (strlen($exludeIPs) > 0) {
                         $exludeIPs = explode('~~~', $exludeIPs);
                         if (count($exludeIPs) > 0) {
@@ -126,7 +136,7 @@ class MatomoTracking
                     }
 
                     // Ausschlussliste für UserAgents prüfen
-                    $exlude_uas = \Config::get('comatrack_exclude_ua');
+                    $exlude_uas = Config::get('comatrack_exclude_ua');
                     if (strlen($exlude_uas) > 0) {
                         $exlude_uas = explode('~~~', $exlude_uas);
                         if (count($exlude_uas) > 0) {
@@ -163,9 +173,16 @@ class MatomoTracking
                         return;
                     }
                     if (!$this->session) {
-                        $this->session = $request->getSession();
+                        try {
+                            $this->session = $request->getSession();
+
+                        } catch (SessionNotFoundException $e) {
+
+                        }
                     }
-                    $this->session->set('comatrackIsBot', false);
+                    if($this->session) {
+                        $this->session->set('comatrackIsBot', false);
+                    }
                 } elseif (true == $this->sessionData['comatrackIsBot']) {
                     $GLOBALS['COMATRACK_INIT'] = false;
                     $GLOBALS['COMATRACK_ISBOT'] = true;
@@ -237,7 +254,7 @@ class MatomoTracking
 
             // Einstellung zum Tracking der IP-Adresse
             if ($GLOBALS['COMATRACK_SETTINGS']['ip']) {
-                $matomoTracker->setIp(\Environment::get('ip'));
+                $matomoTracker->setIp(Environment::get('ip'));
             } else {
                 $matomoTracker->setIp('127.0.0.1');
             }
@@ -266,12 +283,19 @@ class MatomoTracking
         // Da die ID in Matomo Hexadezimal sein muss, kodieren wir die Session-ID per MD5
         if (!$this->session) {
             $request = $event->getRequest();
-            $this->session = $request->getSession();
+            try {
+                $this->session = $request->getSession();
+
+            } catch (SessionNotFoundException $e) {
+
+            }
         }
-        $matomoTracker->setVisitorId(substr(md5($this->session->getId()), 0, 16));
+        if($this->session) {
+            $matomoTracker->setVisitorId(substr(md5($this->session->getId()), 0, 16));
+        }
 
         // Die aufgerufene URL bereitstellen
-        $matomoTracker->setUrl(\Environment::get('uri'));
+        $matomoTracker->setUrl(Environment::get('uri'));
 
         // Tracking der Laufzeit des Skriptes bis hier hin. Da dieser Request als eines der letzten
         // Aktionen in Symfony erfolgt, sollte diese Zeit recht aussagekräftig sein.
