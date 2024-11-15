@@ -196,7 +196,7 @@ class MatomoTracking
 
     public function onKernelTerminate(TerminateEvent $event)
     {
-        $logger = System::getContainer()->get('monolog.logger.contao');
+        $logger = System::getContainer()?->get('monolog.logger.contao');
 
         // Prozesslaufzeit fuer eventuelles Debugging bereitstellen
         $gentime = false;
@@ -207,13 +207,13 @@ class MatomoTracking
         // Sonderfall; war der Aufruf von einem Bot und haben wir Debugging aktiv,
         // dann loggen wir den Zugriff um die Prozesslaufzeit sehen zu können
         if (isset($GLOBALS['COMATRACK_ISBOT']) && true === $GLOBALS['COMATRACK_ISBOT'] && $GLOBALS['COMATRACK_SETTINGS']['debug']) {
-            $logger->log('info','Background-Tracking: Bot skipped'.($gentime ? ' / '.($gentime / 1000).'s' : ''), __METHOD__, TL_GENERAL);
+            $logger?->log('info','Background-Tracking: Bot skipped'.($gentime ? ' / '.($gentime / 1000).'s' : ''), __METHOD__, TL_GENERAL);
 
             return;
         }
         // Zweite Bot-Detection separat loggen
         if (isset($GLOBALS['COMATRACK_ISBOT2']) && true === $GLOBALS['COMATRACK_ISBOT2'] && $GLOBALS['COMATRACK_SETTINGS']['debug']) {
-            $logger->log('info','Background-Tracking: Bot2 skipped'.($gentime ? ' / '.($gentime / 1000).'s' : ''), __METHOD__, TL_GENERAL);
+            $logger?->log('info','Background-Tracking: Bot2 skipped'.($gentime ? ' / '.($gentime / 1000).'s' : ''), __METHOD__, TL_GENERAL);
 
             return;
         }
@@ -228,7 +228,7 @@ class MatomoTracking
         // Protokollieren wir das im Logging sofern aktiv, ansonsten brechen wir ab
         if (!$GLOBALS['COMATRACK_SETTINGS']['404'] && $GLOBALS['COMATRACK_SETTINGS']['is_404'] && (!isset($this->sessionData['comatrackIsBot']) || false === $this->sessionData['comatrackIsBot'])) {
             if ($GLOBALS['COMATRACK_SETTINGS']['debug']) {
-                $logger->log('info','Background-Tracking: 404 skipped'.($gentime ? ' / '.($gentime / 1000).'s' : ''), __METHOD__, TL_GENERAL);
+                $logger?->log('info','Background-Tracking: 404 skipped'.($gentime ? ' / '.($gentime / 1000).'s' : ''), __METHOD__, TL_GENERAL);
             }
 
             return;
@@ -237,7 +237,7 @@ class MatomoTracking
         // Wenn Nutzer mit DNT Header nicht getrackt werden sollen, brechen wir ab...
         if ($GLOBALS['COMATRACK_SETTINGS']['dnt'] && isset($_SERVER['HTTP_DNT']) && '1' == $_SERVER['HTTP_DNT']) {
             if ($GLOBALS['COMATRACK_SETTINGS']['debug']) {
-                $logger->log('info','Background-Tracking: DoNotTrack skipped'.($gentime ? ' / '.($gentime / 1000).'s' : ''), __METHOD__, TL_GENERAL);
+                $logger?->log('info','Background-Tracking: DoNotTrack skipped'.($gentime ? ' / '.($gentime / 1000).'s' : ''), __METHOD__, TL_GENERAL);
             }
 
             return;
@@ -319,9 +319,9 @@ class MatomoTracking
         // immer deaktiviert sein
         if ($GLOBALS['COMATRACK_SETTINGS']['debug']) {
             foreach ($matomoTracker->storedTrackingActions as $log) {
-                $logger->log('info','Background-Tracking: '.$log, __METHOD__, TL_GENERAL);
+                $logger?->log('info','Background-Tracking: '.$log, __METHOD__, TL_GENERAL);
             }
-            $logger->log('info','Background-Tracking: Laufzeit des Skripts: '.($gentime / 1000).'s', __METHOD__, TL_GENERAL);
+            $logger?->log('info','Background-Tracking: Laufzeit des Skripts: '.($gentime / 1000).'s', __METHOD__, TL_GENERAL);
         }
 
         // Übersenden der Tracking-Infos an Matomo
@@ -329,7 +329,7 @@ class MatomoTracking
         // Die Antwort ist normalerweise ein JSON dessen Status wir prüfen können
         if ($GLOBALS['COMATRACK_SETTINGS']['debug']) {
             if (!$json = json_decode($response, true) || !isset($json['status']) || 'success' != $json['status']) {
-                $logger->log('info','Background-Tracking fehlgeschlagen - Server-Antwort: '.$response, __METHOD__, TL_ERROR);
+                $logger?->log('info','Background-Tracking fehlgeschlagen - Server-Antwort: '.$response, __METHOD__, TL_ERROR);
             }
         }
     }
